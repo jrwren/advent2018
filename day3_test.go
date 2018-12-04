@@ -50,8 +50,8 @@ func TestDay3(t *testing.T) {
 #2 @ 3,1: 4x4
 #3 @ 4,4: 1x1`
 		overlapping := day3parta(input)
-		if overlapping != 5 {
-			t.Errorf("got %d expected 5", overlapping)
+		if overlapping != 4 {
+			t.Errorf("got %d expected 4", overlapping)
 		}
 	})
 	t.Run("fake part1", func(t *testing.T) {
@@ -72,8 +72,8 @@ func TestDay3(t *testing.T) {
 	})
 	t.Run("real part1", func(t *testing.T) {
 		o := day3parta(day3input)
-		if o != 0 {
-			t.Errorf("got %d expected ?", o)
+		if o != 109716 {
+			t.Errorf("got %d expected 109716", o)
 		}
 	})
 }
@@ -89,9 +89,15 @@ func (c claim) String() string {
 	return fmt.Sprintf("#%d @ %d,%d: %dx%d", c.id, c.Min.X, c.Min.Y, w, h)
 }
 
+type fabric [1024][1024]byte
+
 func day3parta(input string) int {
 	claims := parseClaims(input)
-	overlaps := 0
+	var fabric fabric
+	doesntoverlap := make(map[int]struct{})
+	for i := 0; i < len(claims); i++ {
+		doesntoverlap[claims[i].id] = struct{}{}
+	}
 	for i := 0; i < len(claims); i++ {
 		for j := i + 1; j < len(claims); j++ {
 			if claims[i].id == claims[j].id {
@@ -100,15 +106,39 @@ func day3parta(input string) int {
 			}
 			if claims[i].Overlaps(claims[j].Rectangle) {
 				ol := claims[i].Intersect(claims[j].Rectangle)
-				overlaps += ol.Dx() * ol.Dy()
-				log.Print(claims[i], " overlaps ", claims[j], " by ",
-					ol.Dx()*ol.Dy())
+				// WTF is intersect broken or what?
+				ol.Max.X--
+				ol.Max.Y--
+				fill(&fabric, ol)
+				// log.Print(claims[i], " overlaps ", claims[j], " by ",
+				// 	ol.Dx()*ol.Dy(), " from ", ol)
+				delete(doesntoverlap, claims[i].id)
+				delete(doesntoverlap, claims[j].id)
 				continue
 			}
 			//log.Print(claims[i], " doesn't overlap ", claims[j])
 		}
 	}
+	log.Printf("%v\n", doesntoverlap)
+	overlaps := 0
+	for x := 0; x < 1024; x++ {
+		for y := 0; y < 1024; y++ {
+			overlaps += int(fabric[x][y])
+		}
+	}
 	return overlaps
+}
+
+func fill(f *fabric, r image.Rectangle) {
+	newinches := 0
+	for x := r.Min.X; x <= r.Max.X; x++ {
+		for y := r.Min.Y; y <= r.Max.Y; y++ {
+			if f[x][y] == 0 {
+				newinches++
+			}
+			f[x][y] = 1
+		}
+	}
 }
 
 func parseClaims(input string) []claim {
