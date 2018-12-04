@@ -30,7 +30,7 @@ ababab`
 		}
 	})
 	t.Run("part 1", func(t *testing.T) {
-		checksum := day2checksum(day2_input)
+		checksum := day2checksum(day2input)
 		if checksum != 7936 {
 			t.Errorf("got %d expected 7936", checksum)
 		}
@@ -48,7 +48,7 @@ wvxyz`)
 		}
 	})
 	t.Run("part 2 ", func(t *testing.T) {
-		common := day2common(day2_input)
+		common := day2common(day2input)
 		if common != "lnfqdscwjyteorambzuchrgpx" {
 			t.Errorf("got %s expected lnfqdscwjyteorambzuchrgpx", common)
 		}
@@ -95,7 +95,7 @@ func day2common(input string) string {
 	}
 	log.Print(words)
 	for i := 0; i < len(words); i++ {
-		for j := i; j < len(words); j++ {
+		for j := i + 1; j < len(words); j++ {
 			d := distanceOne(words[i], words[j])
 			if d {
 				k := diffpos(words[i], words[j])
@@ -130,7 +130,7 @@ func diffpos(a, b string) int {
 	return -1
 }
 
-var day2_input = `lnfgdsywjyleogambzuchirkpx
+var day2input = `lnfgdsywjyleogambzuchirkpx
 nnfqdskfjyteogambzuchirkpx
 lnfqdvvwjyteofambzuchirkpf
 lnfqdsvwjyteogvmbzuthirkpn
