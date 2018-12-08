@@ -11,18 +11,21 @@ import (
 )
 
 func TestDay4(t *testing.T) {
-	f := func(t *testing.T, input string, expect int) {
-		k, err := day4part1(input)
+	f := func(t *testing.T, input string, expect1, expect2 int) {
+		one, two, err := day4(input)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if k != expect {
-			t.Fatalf("got %d, expected %d", k, expect)
+		if one != expect1 {
+			t.Fatalf("got %d, expected %d", one, expect1)
+		}
+		if two != expect2 {
+			t.Fatalf("got %d, expected %d", two, expect2)
 		}
 	}
-	s := t.Run("example 1", func(t *testing.T) { f(t, day4Example, 10*24) })
+	s := t.Run("example 1", func(t *testing.T) { f(t, day4Example, 10*24, 99*45) })
 	if s {
-		t.Run("part1", func(t *testing.T) { f(t, day4Input, 2657*33) })
+		t.Run("part1", func(t *testing.T) { f(t, day4Input, 2657*33, 3499*39) })
 	}
 }
 
@@ -73,13 +76,13 @@ func (g guardLog) Swap(i, j int) {
 	g[i], g[j] = g[j], g[i]
 }
 
-func day4part1(input string) (int, error) {
+func day4(input string) (int, int, error) {
 	gl := guardLog{}
 	lines := strings.Split(input, "\n")
 	for _, line := range lines {
 		t, err := time.Parse("[2006-01-02 15:04]", line[:18])
 		if err != nil {
-			return 0, err
+			return -1, -1, err
 		}
 		det := line[19:]
 		switch {
@@ -92,7 +95,7 @@ func day4part1(input string) (int, error) {
 		case det == "wakes up":
 			gl = append(gl, guardEntry{Time: t, action: wake})
 		default:
-			return 0, fmt.Errorf("unknown entry type %s", det)
+			return -1, -1, fmt.Errorf("unknown entry type %s", det)
 		}
 	}
 	sort.Sort(gl)
@@ -127,15 +130,19 @@ func day4part1(input string) (int, error) {
 				dayminutes[daystr][j] = curGuard
 			}
 		default:
-			return 0, fmt.Errorf("fail")
+			return -1, -1, fmt.Errorf("fail")
 		}
 	}
 	mmcnt := make(map[int]int)
 	mmmax := 0
 	mmmaxi := -1
+	guardMF := -1
+	gmmcnt := make(map[int]map[int]int)
+	gmmmax := 0
+	gmmmaxMM := -1
 	for day, guard := range days {
-		if guard == guardmax {
-			for i := 0; i < 60; i++ {
+		for i := 0; i < 60; i++ {
+			if guard == guardmax {
 				if _, ok := dayminutes[day][i]; ok {
 					mmcnt[i]++
 					if mmcnt[i] > mmmax {
@@ -144,10 +151,24 @@ func day4part1(input string) (int, error) {
 					}
 				}
 			}
+			if g, ok := dayminutes[day][i]; ok {
+				if _, ok := gmmcnt[g]; !ok {
+					gmmcnt[g] = make(map[int]int)
+				}
+				gmmcnt[g][i]++
+				if gmmcnt[g][i] > gmmmax {
+					log.Printf("%d > %d new max found for minute %d by guard %d", gmmcnt[g][i], gmmmax, i, g)
+					gmmmax = gmmcnt[g][i]
+					guardMF = g
+					gmmmaxMM = i
+				}
+			}
 		}
 	}
+
 	log.Println(guardmax, mmmaxi)
-	return guardmax * mmmaxi, nil
+	log.Println(guardMF, gmmmaxMM)
+	return guardmax * mmmaxi, guardMF * gmmmaxMM, nil
 }
 
 var day4Example = `[1518-11-01 00:05] falls asleep
