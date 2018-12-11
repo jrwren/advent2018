@@ -26,7 +26,7 @@ func TestDay5(t *testing.T) {
 }
 
 func day5(input string) (string, int, error) {
-	part1 := day5_part1(input)
+	part1 := day5Part1(input)
 	alpha := "abcdefghijklmnopqrstuvwxyz"
 	shortest := len(input)
 	removed := ""
@@ -35,7 +35,7 @@ func day5(input string) (string, int, error) {
 		L := string(alpha[i] - 32)
 		test := strings.Replace(input, l, "", -1)
 		test = strings.Replace(test, L, "", -1)
-		p := day5_part1(test)
+		p := day5Part1(test)
 		//log.Printf("removed %s and got %s reduced to %s (%d)", string(alpha[i]), test, p, len(p))
 		if len(p) < shortest {
 			shortest = len(p)
@@ -46,7 +46,7 @@ func day5(input string) (string, int, error) {
 	return part1, shortest, nil
 }
 
-func day5_part1(input string) string {
+func day5Part1(input string) string {
 	prev := input
 	for cur := reducePairs(input); prev != cur; cur = reducePairs(cur) {
 		//log.Println("RR ", prev, " ", cur)
