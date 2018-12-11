@@ -10,8 +10,8 @@ import (
 
 func TestDay6(t *testing.T) {
 	log.SetFlags(0)
-	f := func(t *testing.T, input string, expect1 int, expect2 int) {
-		one, two, err := day6(input)
+	f := func(t *testing.T, input string, p2thres, expect1, expect2 int) {
+		one, two, err := day6(input, p2thres)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -22,13 +22,13 @@ func TestDay6(t *testing.T) {
 			t.Fatalf("got %d, expected %d", two, expect2)
 		}
 	}
-	s := t.Run("example", func(t *testing.T) { f(t, day6Example, 17, 0) })
+	s := t.Run("example", func(t *testing.T) { f(t, day6Example, 32, 17, 16) })
 	if s {
-		t.Run("part2", func(t *testing.T) { f(t, day6Input, -1, 0) })
+		t.Run("part2", func(t *testing.T) { f(t, day6Input, 10000, 3449, 44868) })
 	}
 }
 
-func day6(input string) (int, int, error) {
+func day6(input string, p2thres int) (int, int, error) {
 	lines := strings.Split(input, "\n")
 	coords := make([]image.Point, len(lines))
 	var maxX, maxY int
@@ -84,7 +84,38 @@ func day6(input string) (int, int, error) {
 		log.Println(row)
 	}
 	log.Println(foundPoint, names[foundPoint], " is the max area with ", max)
-	return max, 0, nil
+
+	// part 2
+	// What is the size of the region containing all locations which have a
+	// total distance to all given coordinates of less than p2thres?
+	area := 0
+	for j := 0; j <= maxY; j++ {
+		row := ""
+		for i := 0; i <= maxX; i++ {
+			p := image.Point{X: i, Y: j}
+			d := distToAllCoords(p, coords)
+			if d < p2thres {
+				area++
+			}
+			if n, ok := names[p]; ok {
+				row += n
+			}
+			if d < p2thres {
+				row += "#"
+				continue
+			}
+			row += "."
+		}
+	}
+	return max, area, nil
+}
+
+func distToAllCoords(p image.Point, pts []image.Point) int {
+	d := 0
+	for i := range pts {
+		d += manhattanDistance(p, pts[i])
+	}
+	return d
 }
 
 var tie = image.Point{X: -1, Y: -1}
