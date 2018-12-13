@@ -21,7 +21,7 @@ func TestDay5(t *testing.T) {
 	}
 	s := t.Run("example", func(t *testing.T) { f(t, day5Example, "dabCBAcaDA", 4) })
 	if s {
-		t.Run("part2", func(t *testing.T) { f(t, day5Input, day5Expected, 4934) })
+		t.Run("real", func(t *testing.T) { f(t, day5Input, day5Expected, 4934) })
 	}
 }
 

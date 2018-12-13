@@ -23,9 +23,9 @@ func TestDay4(t *testing.T) {
 			t.Fatalf("got %d, expected %d", two, expect2)
 		}
 	}
-	s := t.Run("example 1", func(t *testing.T) { f(t, day4Example, 10*24, 99*45) })
+	s := t.Run("example", func(t *testing.T) { f(t, day4Example, 10*24, 99*45) })
 	if s {
-		t.Run("part1", func(t *testing.T) { f(t, day4Input, 2657*33, 3499*39) })
+		t.Run("real", func(t *testing.T) { f(t, day4Input, 2657*33, 3499*39) })
 	}
 }
 

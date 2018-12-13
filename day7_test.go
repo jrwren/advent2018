@@ -4,14 +4,15 @@ import (
 	"fmt"
 	"log"
 	"sort"
+	"strconv"
 	"strings"
 	"testing"
 )
 
 func TestDay7(t *testing.T) {
 	log.SetFlags(0)
-	f := func(t *testing.T, input string, expect1 string, expect2 int) {
-		one, two, err := day7(input)
+	f := func(t *testing.T, input string, delay, workers int, expect1 string, expect2 int) {
+		one, two, err := day7(input, delay, workers)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -22,13 +23,13 @@ func TestDay7(t *testing.T) {
 			t.Fatalf("got %d, expected %d", two, expect2)
 		}
 	}
-	s := t.Run("example", func(t *testing.T) { f(t, day7Example, "CABDFE", 0) })
+	s := t.Run("example", func(t *testing.T) { f(t, day7Example, 0, 2, "CABDFE", 15) })
 	if s {
-		t.Run("part2", func(t *testing.T) { f(t, day7Input, "JDEKPFABTUHOQSXVYMLZCNIGRW", 0) })
+		t.Run("real", func(t *testing.T) { f(t, day7Input, 60, 5, "JDEKPFABTUHOQSXVYMLZCNIGRW", 1048) })
 	}
 }
 
-func day7(input string) (string, int, error) {
+func day7(input string, delay, workers int) (string, int, error) {
 	lines := strings.Split(input, "\n")
 	deps := make(map[string][]string)
 	steps := make(map[string]struct{})
@@ -52,19 +53,103 @@ func day7(input string) (string, int, error) {
 		sort.Sort(sort.StringSlice(r))
 		log.Println("next:", r, "met:", metdeps)
 		met := r[0]
-		if _, ok := metdeps[met]; !ok {
-			order += met
-			metdeps[met] = struct{}{}
-		}
+		//		if _, ok := metdeps[met]; !ok {
+		order += met
+		metdeps[met] = struct{}{}
+		//		}
 		log.Println(order)
 	}
-	return order, 0, nil
+	log.Println("--")
+	p2 := day7part2(deps, steps, delay, workers)
+	return order, p2, nil
+}
+
+func day7part2(deps map[string][]string, steps map[string]struct{}, delay, workers int) int {
+
+	pickedup := make(map[string]struct{})
+	metdeps := make(map[string]struct{})
+	order := ""
+	s := 0
+	workerJobs := make(map[int]string)
+	jobTime := make(map[string]int)
+	for len(order) < len(steps) {
+		works := ""
+		r := nextDeps(deps, steps, metdeps)
+		sort.Sort(sort.StringSlice(r))
+		log.Println(s, " next:", r, "met:", metdeps, "picked:", pickedup)
+		for i := 0; i < workers; i++ {
+			log.Println("WTF", workerJobs, jobTime, "next", r)
+			job := workerJobs[i]
+			if job == "" {
+				log.Println("worker", i, "ready for job")
+				r := nextDeps(deps, steps, metdeps)
+				sort.Sort(sort.StringSlice(r))
+				if len(r) == 0 {
+					works += ".  "
+					continue
+				}
+				met := r[0]
+				// is another worker already working on this?
+				found := false
+				for i := range r {
+					if _, ok := pickedup[r[i]]; ok {
+						continue
+					}
+					found = true
+					met = r[i]
+					break
+				}
+				if !found {
+					works += ".  "
+					continue
+				}
+				log.Println("worker", i, "picking up job ", met)
+				pickedup[met] = struct{}{}
+				workerJobs[i] = met
+				jobTime[met] = 1
+				works += met + "  " + strconv.Itoa(jobTime[met]) + "  "
+				continue
+			}
+
+			jobTime[job]++
+
+			works += job + " " + strconv.Itoa(jobTime[job]) + "  "
+
+			//log.Println("END", workerJobs, jobTime, "next", r)
+		}
+		log.Println(s, "  ", works, "   |", order)
+
+		// now that all the work is assigned see if any completed.
+		for i := 0; i < workers; i++ {
+			job := workerJobs[i]
+			if job == "" {
+				continue
+			}
+			if steptime(job)+delay == jobTime[job] {
+				// its done!
+				order += job
+				delete(workerJobs, i)
+				delete(jobTime, job)
+				metdeps[job] = struct{}{}
+				log.Println("adding met dep", job)
+				continue
+			}
+		}
+
+		s++
+	}
+	return s // doing it wrong shows me 89 ... is the real answer 90? _NO! 208 is too low.
+}
+
+func steptime(step string) int {
+	n := int(byte(step[0]))
+	return n - 64
 }
 
 func nextDeps(deps map[string][]string, steps, metdeps map[string]struct{}) (ready []string) {
 step:
 	for step := range steps {
-		log.Print("step ", step, " deps ", deps[step])
+		//		log.Print("step ", step, " deps ", deps[step])
 		for _, need := range deps[step] {
 			if _, ok := metdeps[need]; !ok {
 				continue step
